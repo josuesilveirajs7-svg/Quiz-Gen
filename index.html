@@ -7,7 +7,7 @@
 <meta name="description" content="Quiz de qualquer tema, com perguntas geradas a partir de pesquisas na internet.">
 <meta name="theme-color" content="#2350ff">
 <meta name="color-scheme" content="light dark">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest?v=4">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="QuizGen">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 <div id="splash" aria-hidden="true">
@@ -113,6 +113,11 @@
     <div class="sec"><h2>Diagnóstico</h2><ul class="diag" id="diag"></ul>
       <p class="help" id="diagtip"></p>
     </div>
+    <div class="panel">
+      <p style="margin:0 0 6px;font-weight:600">Ainda não instala?</p>
+      <p class="help" style="margin:0 0 14px">“Reparar app” apaga a cópia antiga guardada no celular e baixa tudo de novo. Seu histórico e sua chave são mantidos.</p>
+      <button class="btn wide" id="repair">Reparar app</button>
+    </div>
     <div class="acts"><button class="btn ghost" id="instback">Voltar</button></div>
   </section>
 
@@ -169,6 +174,6 @@
     <div class="sec" id="rsrc-wrap" hidden><h2>Fontes</h2><ul class="srcs" id="rsrc"></ul></div>
   </section>
 </div>
-<script src="app.js"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

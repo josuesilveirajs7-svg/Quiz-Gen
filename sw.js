@@ -1,13 +1,13 @@
-// Service worker do QuizGen: guarda o app para abrir rápido e funcionar offline.
-// Ao mudar qualquer arquivo, aumente a versão abaixo para os celulares baixarem a atualização.
-const VERSION = 'quizgen-v3';
+// Service worker do QuizGen.
+// Estratégia: sempre busca a versão mais nova na internet; usa a cópia guardada só quando estiver offline.
+// Assim o celular nunca fica preso numa versão antiga.
+const VERSION = 'quizgen-v4';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
-  // Guarda arquivo por arquivo: se algum faltar no servidor, o app continua instalável.
   e.waitUntil(caches.open(VERSION)
-    .then(c => Promise.allSettled(SHELL.map(f => c.add(f))))
+    .then(c => Promise.allSettled(SHELL.map(f => fetch(f, {cache: 'reload'}).then(r => r.ok && c.put(f, r)))))
     .then(() => self.skipWaiting()));
 });
 
@@ -19,24 +19,15 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET') return;                       // chamadas à API do Gemini passam direto
+  if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.hostname.endsWith('googleapis.com') && !url.hostname.startsWith('fonts.')) return;
-
-  // Páginas: rede primeiro, cache se estiver offline
-  if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).then(r => { caches.open(VERSION).then(c => c.put('index.html', r.clone())); return r; })
-      .catch(() => caches.match('index.html')));
-    return;
-  }
-  // Arquivos do app e fontes: cache primeiro, atualiza em segundo plano
-  e.respondWith(caches.match(req).then(hit => {
-    const net = fetch(req).then(r => {
-      if (r.ok && (url.origin === location.origin || url.hostname.includes('fonts.'))) {
-        const copy = r.clone(); caches.open(VERSION).then(c => c.put(req, copy));
-      }
+  const same = url.origin === location.origin, font = url.hostname.startsWith('fonts.g');
+  if (!same && !font) return;                                   // API do Gemini e outros: direto pela rede
+  e.respondWith(
+    fetch(req, same ? {cache: 'no-cache'} : undefined).then(r => {
+      if (r.ok) { const copy = r.clone(); caches.open(VERSION).then(c => c.put(req.mode === 'navigate' ? 'index.html' : req, copy)); }
       return r;
-    }).catch(() => hit);
-    return hit || net;
-  }));
+    }).catch(() => caches.match(req, {ignoreSearch: true})
+      .then(hit => hit || (req.mode === 'navigate' ? caches.match('index.html') : Response.error())))
+  );
 });

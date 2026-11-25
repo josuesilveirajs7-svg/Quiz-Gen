@@ -273,6 +273,12 @@ addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPromp
 addEventListener('appinstalled', () => { deferredPrompt = null; updInst(); });
 $('instbtn').onclick = openInst;
 $('instback').onclick = () => show('home');
+$('repair').onclick = async () => {
+  $('repair').disabled = true; $('repair').textContent = 'Reparando…';
+  try{ for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister(); }catch(e){}
+  try{ for (const k of await caches.keys()) await caches.delete(k); }catch(e){}
+  location.replace(location.pathname + '?r=' + Date.now());
+};
 $('instgo').onclick = async () => {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
@@ -303,8 +309,9 @@ async function openInst(){
       'Você abriu o link dentro de outro app (Instagram, Facebook…). Toque nos três pontinhos e escolha “Abrir no navegador”.'],
     ['Arquivo do app (manifest)', () => okFetch(man, 'json'),
       'O arquivo manifest.webmanifest não foi encontrado. Envie-o para a MESMA pasta do index.html.'],
-    ['Ícones', async () => (await okFetch('icon-192.png', 'image')) && (await okFetch('icon-512.png', 'image')),
-      'Os ícones icon-192.png e icon-512.png não foram encontrados. Envie-os para a MESMA pasta do index.html.'],
+    ['Ícones', async () => { try{ const m = await (await fetch(man, {cache:'no-store'})).json(); const ic = (m.icons || []).map(i => new URL(i.src, man).href);
+        if (!ic.length) return false; for (const u of ic) if (!(await okFetch(u, 'image'))) return false; return true; }catch(e){ return false; } },
+      'Algum ícone do manifesto não foi encontrado. Toque em “Reparar app” abaixo; se continuar, envie os ícones para a MESMA pasta do index.html.'],
     ['Modo offline (service worker)', swOK,
       'O arquivo sw.js não foi encontrado ou não carregou. Envie-o para a MESMA pasta do index.html e recarregue a página.'],
   ];
@@ -323,5 +330,9 @@ updInst();
 const net = () => { $('offline').hidden = navigator.onLine; };
 addEventListener('online', net); addEventListener('offline', net); net();
 renderHist();
-if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+if ('serviceWorker' in navigator){
+  const hadCtrl = !!navigator.serviceWorker.controller; let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadCtrl && !reloaded){ reloaded = true; location.reload(); } });
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js', {updateViaCache: 'none'}).then(r => r.update()).catch(() => {}));
+}
 }
