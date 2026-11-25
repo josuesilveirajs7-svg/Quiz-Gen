@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QuizGen</title>
+<meta name="description" content="Quiz de qualquer tema, com perguntas geradas a partir de pesquisas na internet.">
+<meta name="theme-color" content="#2350ff">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QuizGen">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="splash" aria-hidden="true">
+  <div class="sp">
+    <div class="sp-deck"><span></span><span></span><span><b>?</b></span></div>
+    <h1><span style="animation-delay:1.05s">Q</span><span style="animation-delay:1.11s">u</span><span style="animation-delay:1.17s">i</span><span style="animation-delay:1.23s">z</span><span style="animation-delay:1.29s">G</span><span style="animation-delay:1.35s">e</span><span style="animation-delay:1.41s">n</span></h1>
+    <p>Aprenda qualquer tema jogando</p>
+  </div>
+</div>
+<div class="topband">
+  <div class="inner">
+    <header class="top">
+      <button class="logo" id="home" aria-label="Início"><i>?</i>QuizGen</button>
+      <button class="gear" id="cfg" aria-label="Configurações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </header>
+    <div class="hero" id="hero">
+      <div class="floaters" aria-hidden="true"><span>A</span><span>?</span></div>
+      <h1>Teste o que você sabe sobre <em>qualquer tema</em></h1>
+      <p>15 perguntas criadas a partir de pesquisas na internet, do básico ao difícil.</p>
+      <form class="search" id="f">
+        <input id="q" type="search" placeholder="Digite qualquer tema…" autocomplete="off" maxlength="120" aria-label="Tema do quiz" enterkeyhint="search">
+        <button class="btn" id="go">Gerar</button>
+      </form>
+    </div>
+  </div>
+</div>
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <div class="offline" id="offline" hidden>Você está sem internet. Dá para ver o histórico, mas gerar perguntas precisa de conexão.</div>
+
+  <section class="view on" id="v-home">
+    <p class="lbl">Sugestões</p>
+    <div class="chips" id="sugs"></div>
+    <div class="sec">
+      <h2>Seu histórico</h2>
+      <ul class="hist" id="hist"></ul>
+    </div>
+  </section>
+
+  <section class="view cfg" id="v-cfg">
+    <div class="kicker">Configurações</div>
+    <h1>Sua chave do Gemini</h1>
+    <p class="help">O QuizGen pesquisa na internet usando o Google (Gemini com Pesquisa Google). Use uma chave que você já tem ou crie uma grátis, sem cartão.</p>
+    <div class="panel">
+      <ol class="steps">
+        <li><span>Abra <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> com sua conta Google.</span></li>
+        <li><span>Copie uma chave existente ou toque em “Create API key”.</span></li>
+        <li><span>Cole abaixo e salve.</span></li>
+      </ol>
+    </div>
+    <form id="cf" class="panel">
+      <div class="field">
+        <label for="key">Chave da API</label>
+        <input id="key" type="password" autocomplete="off" placeholder="AIza…" spellcheck="false">
+        <span class="help">Fica salva só neste aparelho. Nunca vai para o GitHub.</span>
+      </div>
+      <div class="field">
+        <label for="model">Modelo</label>
+        <input id="model" type="text" autocomplete="off" spellcheck="false">
+        <span class="help">Se der erro de modelo, troque pelo nome que aparece no Google AI Studio.</span>
+      </div>
+      <div class="acts">
+        <button class="btn" type="submit">Salvar</button>
+        <button class="btn ghost" type="button" id="cfgback">Voltar</button>
+      </div>
+      <div class="okmsg" id="cfgok" hidden>Chave salva. Já pode pesquisar um tema.</div>
+    </form>
+  </section>
+
+  <section class="view" id="v-load">
+    <div class="load">
+      <div class="deck"><span></span><span></span><span>?</span></div>
+      <h2 id="lt">Pesquisando…</h2>
+      <p id="lp">Buscando fontes confiáveis na internet.</p>
+      <div class="bar" id="lbar"><i></i></div>
+      <div class="err" id="lerr" hidden></div>
+      <div class="acts" id="lacts" hidden>
+        <button class="btn" id="retry">Tentar de novo</button>
+        <button class="btn ghost" id="back">Voltar</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view pick" id="v-pick">
+    <div class="kicker">Tema</div>
+    <h1 id="ptitle"></h1>
+    <div class="levels">
+      <button class="lvl all" data-l="todos"><span class="dot d0">15</span><span><b>Todos em sequência</b><small>Fácil → Médio → Difícil</small></span><span class="go">›</span></button>
+      <button class="lvl" data-l="facil"><span class="dot d1">5</span><span><b>Fácil</b><small>Conceitos básicos e definições</small></span><span class="go">›</span></button>
+      <button class="lvl" data-l="medio"><span class="dot d2">5</span><span><b>Médio</b><small>Aplicação e relação entre ideias</small></span><span class="go">›</span></button>
+      <button class="lvl" data-l="dificil"><span class="dot d3">5</span><span><b>Difícil</b><small>Detalhes, exceções e raciocínio</small></span><span class="go">›</span></button>
+    </div>
+    <div class="sec" id="psrc-wrap" hidden><h2>Fontes pesquisadas</h2><ul class="srcs" id="psrc"></ul></div>
+  </section>
+
+  <section class="view" id="v-quiz">
+    <div class="qhead"><span class="tag" id="qtag"></span><button class="quit" id="quit">Sair</button></div>
+    <div class="prog" id="qbar"></div>
+    <div class="qcard" id="qcard">
+      <h2 id="qtext"></h2>
+      <div class="opts" id="opts"></div>
+      <div id="qexp"></div>
+    </div>
+    <button class="btn wide next" id="next" hidden>Próxima</button>
+  </section>
+
+  <section class="view" id="v-res">
+    <div class="kicker" id="rtopic"></div>
+    <div class="big">
+      <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="10"/><circle id="rarc" cx="50" cy="50" r="42" fill="none" stroke="#ffd23f" stroke-width="10" stroke-linecap="round" transform="rotate(-90 50 50)" stroke-dasharray="264" stroke-dashoffset="264"/><text id="rpct" x="50" y="57" text-anchor="middle" fill="#fff" font-family="Sora,sans-serif" font-weight="800" font-size="22"></text></svg>
+      <div><h1 id="rscore"></h1><p id="rmsg"></p></div>
+    </div>
+    <div class="per" id="rper"></div>
+    <div class="acts">
+      <button class="btn" id="redo">Refazer erros</button>
+      <button class="btn ghost" id="newq">Gerar novas perguntas</button>
+      <button class="btn ghost" id="newt">Novo tema</button>
+    </div>
+    <div class="sec"><h2>Perguntas que você errou</h2><ul class="wrong" id="rwrong"></ul></div>
+    <div class="sec" id="rsrc-wrap" hidden><h2>Fontes</h2><ul class="srcs" id="rsrc"></ul></div>
+  </section>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
