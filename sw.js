@@ -1,7 +1,7 @@
 // Service worker do QuizGen.
 // Estratégia: sempre busca a versão mais nova na internet; usa a cópia guardada só quando estiver offline.
 // Assim o celular nunca fica preso numa versão antiga.
-const VERSION = 'quizgen-v4';
+const VERSION = 'quizgen-v5';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 

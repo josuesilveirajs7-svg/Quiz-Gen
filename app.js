@@ -27,7 +27,7 @@ $('cfg').onclick = openCfg;
 $('cfgback').onclick = () => show('home');
 $('cf').addEventListener('submit', e => {
   e.preventDefault();
-  store.set('qg_key', $('key').value.trim());
+  store.set('qg_key', $('key').value.trim()); store.set('qg_models', null);
   store.set('qg_model', $('model').value.trim() || DEFAULT_MODEL);
   $('cfgok').hidden = false;
   if (pending){ const t = pending; pending = null; setTimeout(() => start(t), 400); }
@@ -52,10 +52,12 @@ $('hist').addEventListener('click', e => {
 });
 
 /* ---------------- pesquisa + geração ---------------- */
-function buildPrompt(topic, avoid){
+function buildPrompt(topic, avoid, search = true){
+  const passo1 = search ? `PASSO 1 — PESQUISA: use a Pesquisa Google para reunir informações sobre o tema em várias fontes confiáveis da internet: sites de universidades, órgãos de governo, museus, enciclopédias como a Britannica, documentação oficial, revistas científicas, portais educacionais e veículos jornalísticos reconhecidos. NÃO use a Wikipédia nem sites que copiam a Wikipédia (adicione -site:wikipedia.org às buscas). Confira cada fato em mais de uma fonte quando possível.`
+    : `PASSO 1 — BASE: use apenas conhecimento consolidado e verificável sobre o tema, como o encontrado em livros didáticos, universidades e enciclopédias como a Britannica. Não use a Wikipédia como referência. Se não tiver certeza de um fato, não o use.`;
   return `Você é um professor especialista. Tema do quiz: "${topic}".
 
-PASSO 1 — PESQUISA: use a Pesquisa Google para reunir informações sobre o tema em várias fontes confiáveis da internet: sites de universidades, órgãos de governo, museus, enciclopédias como a Britannica, documentação oficial, revistas científicas, portais educacionais e veículos jornalísticos reconhecidos. NÃO use a Wikipédia nem sites que copiam a Wikipédia (adicione -site:wikipedia.org às buscas). Confira cada fato em mais de uma fonte quando possível.
+${passo1}
 
 PASSO 2 — QUIZ: com base no que pesquisou, crie EXATAMENTE 15 perguntas de múltipla escolha em português do Brasil:
 - 5 de nível "facil": conceitos básicos e definições
@@ -74,36 +76,61 @@ Responda SOMENTE com um array JSON válido, sem texto antes ou depois e sem mark
 [{"nivel":"facil","pergunta":"...","alternativas":["...","...","...","..."],"correta":0,"explicacao":"..."}]`;
 }
 
-async function callGemini(prompt){
+async function listModels(key){
+  const tag = key.slice(-6), c = store.get('qg_models', null);
+  if (c && c.tag === tag && Date.now() - c.at < 864e5 && c.list.length) return c.list;
+  try{
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${encodeURIComponent(key)}`);
+    if (!r.ok) return [];
+    const j = await r.json();
+    const ver = n => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
+    const rank = n => (/pro/.test(n) ? 20 : /lite/.test(n) ? 10 : 0) + (/preview|exp/.test(n) ? 1 : 0);
+    const list = (j.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => String(m.name || '').replace(/^models\//, ''))
+      .filter(n => /^gemini-.*(flash|pro)/.test(n) && !/image|tts|audio|live|embed|robotics|computer|native|thinking/.test(n))
+      .sort((a, b) => rank(a) - rank(b) || ver(b) - ver(a));
+    store.set('qg_models', {tag, at: Date.now(), list});
+    return list;
+  }catch(e){ return []; }
+}
+
+async function callGemini(prompt, search = true){
   const {key, model} = cfg();
-  const models = [...new Set([model, ...FALLBACK_MODELS])];
-  let lastErr;
+  const avail = await listModels(key);
+  let models = avail.length
+    ? [...new Set([...(avail.includes(model) ? [model] : []), ...avail])].slice(0, 5)
+    : [...new Set([model, ...FALLBACK_MODELS])];
+  const errs = [];
   for (const m of models){
+    $('lp').textContent = errs.length ? 'Tentando outro modelo (' + m + ')…' : $('lp').textContent;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent?key=${encodeURIComponent(key)}`;
+    const body = {contents:[{role:'user', parts:[{text: prompt}]}], generationConfig:{temperature:0.6}};
+    if (search) body.tools = [{google_search:{}}];
     let r, j;
     try{
-      r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        contents:[{role:'user', parts:[{text: prompt}]}],
-        tools:[{google_search:{}}],
-        generationConfig:{temperature:0.6}
-      })});
+      r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
       j = await r.json().catch(() => ({}));
-    }catch(e){ const er = new Error('rede'); er.kind = 'net'; throw er; }
+    }catch(e){ throw Object.assign(new Error('rede'), {kind:'net'}); }
     if (r.ok){
       const c = (j.candidates || [])[0] || {};
       const text = ((c.content && c.content.parts) || []).map(p => p.text || '').join('');
       const chunks = (c.groundingMetadata && c.groundingMetadata.groundingChunks) || [];
       const srcs = chunks.map(x => x.web).filter(w => w && w.uri && !BLOCK.test((w.title||'')+' '+w.uri));
-      if (!text){ lastErr = Object.assign(new Error('vazio'), {kind:'empty'}); continue; }
+      if (!text){ errs.push({m, status:0, msg:'resposta vazia'}); continue; }
       if (m !== model) store.set('qg_model', m);
       return {text, srcs};
     }
-    const msg = (j.error && j.error.message) || ('HTTP '+r.status);
-    lastErr = Object.assign(new Error(msg), {status:r.status});
-    if (r.status === 404 || /not found|not supported/i.test(msg)) continue;   // modelo não existe → tenta o próximo
-    throw lastErr;
+    const msg = String((j.error && j.error.message) || ('HTTP ' + r.status));
+    if (r.status === 400 && /api key/i.test(msg)) throw Object.assign(new Error(msg), {status:400, kind:'key'});
+    if (r.status === 401 || r.status === 403) throw Object.assign(new Error(msg), {status:r.status, kind:'perm'});
+    errs.push({m, status:r.status, msg});
+    // 404 (modelo não existe), 429 (cota desse modelo), 5xx (sobrecarga): tenta o próximo modelo
+    if (!(r.status === 404 || r.status === 429 || r.status >= 500 || /not found|not supported/i.test(msg))) break;
   }
-  throw lastErr;
+  const q = errs.find(e => e.status === 429), last = q || errs[errs.length - 1] || {status:0, msg:''};
+  const wait = (last.msg.match(/retry in ([\d.]+)\s*s/i) || [])[1];
+  throw Object.assign(new Error(last.msg), {status:last.status, tried: errs.map(e => e.m), wait: wait ? Math.ceil(+wait) : 0});
 }
 
 function parse(x){
@@ -138,36 +165,50 @@ function renderSrcs(ul, wrap){
 
 const TIPS = ['Buscando fontes confiáveis na internet…','Cruzando informações entre os sites…','Escolhendo alternativas plausíveis…','Separando fácil, médio e difícil…','Escrevendo as explicações…'];
 let tipT = null;
-function loadErr(msg, showCfg){
+function loadErr(msg, o = {}){
   clearInterval(tipT); $('lbar').hidden = true;
   $('lt').textContent = 'Não deu certo desta vez'; $('lp').textContent = '';
   $('lerr').textContent = msg; $('lerr').hidden = false; $('lacts').hidden = false;
-  $('retry').textContent = showCfg ? 'Abrir configurações' : 'Tentar de novo';
-  $('retry').onclick = showCfg ? openCfg : () => start(S.topic, true);
+  $('ldet').hidden = !o.detail; $('ldet').textContent = o.detail ? 'Mensagem do Google: ' + o.detail.slice(0, 260) : '';
+  $('retry').textContent = o.cfg ? 'Abrir configurações' : 'Tentar de novo';
+  $('retry').onclick = o.cfg ? openCfg : () => start(S.topic, true, S.search);
+  $('nosearch').hidden = !o.nosearch;
 }
-async function start(topic, again){
+$('nosearch').onclick = () => start(S.topic, true, false);
+async function start(topic, again, search = true){
   topic = String(topic || '').trim(); if (!topic) return;
   if (!cfg().key){ pending = topic; openCfg(); return; }
   if (!again || topic !== S.topic) S.seen = [];
-  S.topic = topic;
-  $('lt').textContent = 'Pesquisando “'+topic+'”'; $('lp').textContent = TIPS[0];
-  $('lerr').hidden = true; $('lacts').hidden = true; $('lbar').hidden = false;
+  S.topic = topic; S.search = search;
+  $('lt').textContent = (search ? 'Pesquisando “' : 'Gerando perguntas sobre “') + topic + '”'; $('lp').textContent = search ? TIPS[0] : TIPS[2];
+  $('lerr').hidden = true; $('lacts').hidden = true; $('ldet').hidden = true; $('lbar').hidden = false;
   show('load');
-  let t = 1; clearInterval(tipT); tipT = setInterval(() => { $('lp').textContent = TIPS[t++ % TIPS.length]; }, 3000);
+  let t = 1; clearInterval(tipT); tipT = setInterval(() => { $('lp').textContent = TIPS[t++ % TIPS.length]; }, 3500);
   try{
-    const {text, srcs} = await callGemini(buildPrompt(topic, S.seen.slice(-30)));
+    const {text, srcs} = await callGemini(buildPrompt(topic, S.seen.slice(-30), search), search);
     S.qs = parse(text); S.srcs = srcs;
     S.seen.push(...S.qs.map(q => q.pergunta));
     clearInterval(tipT);
     $('ptitle').textContent = topic; renderSrcs($('psrc'), $('psrc-wrap'));
+    $('pnote').hidden = search;
     show('pick');
   }catch(e){
+    const d = e.message && e.message !== 'rede' ? e.message : '';
     if (e.kind === 'net') loadErr('Sem conexão com a internet. Verifique sua rede e tente de novo.');
-    else if (e.status === 400 && /api key/i.test(e.message)) loadErr('A chave da API parece inválida. Confira nas configurações.', true);
-    else if (e.status === 401 || e.status === 403) loadErr('A chave não tem permissão. Gere uma nova em aistudio.google.com/apikey.', true);
-    else if (e.status === 429) loadErr('O limite gratuito da sua chave foi atingido por agora. Espere alguns minutos e tente de novo.');
-    else if (e.status === 404) loadErr('Modelo não encontrado. Confira o nome do modelo nas configurações.', true);
-    else loadErr('A resposta veio incompleta. Tente gerar de novo.');
+    else if (e.kind === 'key') loadErr('A chave da API parece inválida. Confira se colou a chave inteira nas configurações.', {cfg:true, detail:d});
+    else if (e.kind === 'perm') loadErr('Essa chave não tem permissão para usar o Gemini. Crie uma chave nova em aistudio.google.com/apikey.', {cfg:true, detail:d});
+    else if (e.status === 429){
+      const zero = /limit:\s*0\b|limit 0/i.test(d), grounding = /search|ground/i.test(d);
+      const tried = e.tried && e.tried.length > 1 ? ` Tentei ${e.tried.length} modelos diferentes.` : '';
+      loadErr(
+        grounding ? 'A cota gratuita da Pesquisa Google da sua chave acabou por agora.' + tried + ' Você pode gerar sem pesquisa na web ou tentar mais tarde.'
+        : zero ? 'Sua chave não tem cota gratuita para estes modelos (o Google informou limite 0).' + tried + ' Isso acontece com chaves de projetos antigos ou ligados a faturamento. Crie uma chave nova em aistudio.google.com/apikey, num projeto novo.'
+        : 'O limite da sua chave foi atingido.' + tried + (e.wait ? ` O Google pediu para esperar cerca de ${e.wait} segundos.` : ' Espere 1 minuto e tente de novo.'),
+        {detail:d, nosearch: S.search !== false, cfg: zero && !grounding});
+    }
+    else if (e.status === 404) loadErr('Nenhum modelo compatível foi encontrado para a sua chave.', {cfg:true, detail:d});
+    else if (e.status >= 500) loadErr('Os servidores do Google estão sobrecarregados agora. Tente de novo em instantes.', {detail:d});
+    else loadErr('A resposta veio incompleta. Tente gerar de novo.', {detail:d, nosearch: S.search !== false});
   }
 }
 $('f').addEventListener('submit', e => { e.preventDefault(); $('q').blur(); start($('q').value); });
@@ -234,7 +275,7 @@ function result(){
   if (pct >= .7) confetti();
 }
 $('redo').onclick = () => begin(S.wrong.slice(), true);
-$('newq').onclick = () => start(S.topic, true);
+$('newq').onclick = () => start(S.topic, true, S.search !== false);
 $('newt').onclick = () => { $('q').value = ''; show('home'); $('q').focus(); };
 $('home').onclick = () => { renderHist(); show('home'); };
 

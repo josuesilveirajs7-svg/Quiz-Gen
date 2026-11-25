@@ -66,4 +66,4 @@ limite, espere alguns minutos. Se o Google mudar o nome do modelo, troque o camp
 ## Atualizar o app
 
 Depois de mudar qualquer arquivo, abra `sw.js` e aumente a versão
-(`quizgen-v4` → `quizgen-v5`) e o `?v=4` no index.html (→ `?v=5`). Assim os celulares baixam a nova versão.
+(`quizgen-v5` → `quizgen-v6`) e o `?v=5` no index.html (→ `?v=6`). Assim os celulares baixam a nova versão.

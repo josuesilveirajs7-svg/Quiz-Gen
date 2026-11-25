@@ -198,3 +198,5 @@ form.search input::placeholder{color:var(--mute)}
 .diag li i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:700 13px Inter,sans-serif;font-style:normal;color:#fff;background:var(--ok)}
 .diag li.no i{background:var(--bad)}.diag li.wait i{background:var(--mute)}
 .diag small{display:block;color:var(--mute);font-size:13px}
+.det{font-size:13px;color:var(--mute);text-align:left;margin:10px 2px 0;overflow-wrap:anywhere}
+.note2{font-size:14px;color:var(--mute);background:var(--card2);border-radius:12px;padding:10px 14px;margin:18px 0 0}

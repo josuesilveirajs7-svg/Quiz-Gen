@@ -7,7 +7,7 @@
 <meta name="description" content="Quiz de qualquer tema, com perguntas geradas a partir de pesquisas na internet.">
 <meta name="theme-color" content="#2350ff">
 <meta name="color-scheme" content="light dark">
-<link rel="manifest" href="manifest.webmanifest?v=4">
+<link rel="manifest" href="manifest.webmanifest?v=5">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="QuizGen">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <div id="splash" aria-hidden="true">
@@ -76,7 +76,7 @@
       <div class="field">
         <label for="model">Modelo</label>
         <input id="model" type="text" autocomplete="off" spellcheck="false">
-        <span class="help">Se der erro de modelo, troque pelo nome que aparece no Google AI Studio.</span>
+        <span class="help">Pode deixar como está: o app descobre sozinho os modelos que a sua chave pode usar e troca se um atingir o limite.</span>
       </div>
       <div class="acts">
         <button class="btn" type="submit">Salvar</button>
@@ -128,8 +128,10 @@
       <p id="lp">Buscando fontes confiáveis na internet.</p>
       <div class="bar" id="lbar"><i></i></div>
       <div class="err" id="lerr" hidden></div>
+      <p class="det" id="ldet" hidden></p>
       <div class="acts" id="lacts" hidden>
         <button class="btn" id="retry">Tentar de novo</button>
+        <button class="btn ghost" id="nosearch" hidden>Gerar sem pesquisa na web</button>
         <button class="btn ghost" id="back">Voltar</button>
       </div>
     </div>
@@ -144,6 +146,7 @@
       <button class="lvl" data-l="medio"><span class="dot d2">5</span><span><b>Médio</b><small>Aplicação e relação entre ideias</small></span><span class="go">›</span></button>
       <button class="lvl" data-l="dificil"><span class="dot d3">5</span><span><b>Difícil</b><small>Detalhes, exceções e raciocínio</small></span><span class="go">›</span></button>
     </div>
+    <p class="note2" id="pnote" hidden>Perguntas geradas sem pesquisa na web, com o conhecimento do próprio Gemini.</p>
     <div class="sec" id="psrc-wrap" hidden><h2>Fontes pesquisadas</h2><ul class="srcs" id="psrc"></ul></div>
   </section>
 
@@ -174,6 +177,6 @@
     <div class="sec" id="rsrc-wrap" hidden><h2>Fontes</h2><ul class="srcs" id="rsrc"></ul></div>
   </section>
 </div>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
