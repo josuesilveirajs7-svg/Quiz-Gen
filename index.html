@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#2350ff">
 <meta name="color-scheme" content="light dark">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="QuizGen">
@@ -47,6 +47,7 @@
   <div class="offline" id="offline" hidden>Você está sem internet. Dá para ver o histórico, mas gerar perguntas precisa de conexão.</div>
 
   <section class="view on" id="v-home">
+    <button class="install" id="instbtn" hidden><span class="ii"><img src="icon-192.png" alt=""></span><span><b>Instalar o QuizGen</b><small>Abra direto da tela inicial, como um app</small></span><span class="go">›</span></button>
     <p class="lbl">Sugestões</p>
     <div class="chips" id="sugs"></div>
     <div class="sec">
@@ -83,6 +84,36 @@
       </div>
       <div class="okmsg" id="cfgok" hidden>Chave salva. Já pode pesquisar um tema.</div>
     </form>
+  </section>
+
+  <section class="view cfg" id="v-inst">
+    <div class="kicker">Instalação</div>
+    <h1>Instalar no celular</h1>
+    <div class="panel" id="inst-now" hidden>
+      <p style="margin:0 0 14px">Tudo pronto. Toque no botão para instalar.</p>
+      <button class="btn wide" id="instgo">Instalar agora</button>
+    </div>
+    <div class="panel" id="inst-ios" hidden>
+      <p class="help" style="margin:0 0 12px">No iPhone o aviso de instalar não aparece sozinho. Use o Safari:</p>
+      <ol class="steps">
+        <li><span>Abra este endereço no <b>Safari</b> (no Chrome do iPhone também funciona pelo botão de compartilhar).</span></li>
+        <li><span>Toque no botão <b>Compartilhar</b> (quadrado com seta para cima).</span></li>
+        <li><span>Role e toque em <b>Adicionar à Tela de Início</b>, depois em <b>Adicionar</b>.</span></li>
+      </ol>
+    </div>
+    <div class="panel" id="inst-and" hidden>
+      <p class="help" style="margin:0 0 12px">Se o botão “Instalar agora” não apareceu, faça pelo menu:</p>
+      <ol class="steps">
+        <li><span>Abra este endereço no <b>Google Chrome</b>.</span></li>
+        <li><span>Toque no menu <b>⋮</b> no canto de cima.</span></li>
+        <li><span>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</span></li>
+      </ol>
+    </div>
+    <div class="panel" id="inst-done" hidden><p style="margin:0">O QuizGen já está instalado e aberto como app. 🎉</p></div>
+    <div class="sec"><h2>Diagnóstico</h2><ul class="diag" id="diag"></ul>
+      <p class="help" id="diagtip"></p>
+    </div>
+    <div class="acts"><button class="btn ghost" id="instback">Voltar</button></div>
   </section>
 
   <section class="view" id="v-load">

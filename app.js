@@ -263,6 +263,62 @@ function confetti(){
   else { sp.addEventListener('click', hide); setTimeout(hide, 2500); }
 }
 
+/* ---------------- instalação + diagnóstico ---------------- */
+let deferredPrompt = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const inAppBrowser = /FBAN|FBAV|Instagram|Line\/|TikTok|; wv\)/i.test(navigator.userAgent);
+function updInst(){ $('instbtn').hidden = isStandalone(); }
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; updInst(); if ($('v-inst').classList.contains('on')) openInst(); });
+addEventListener('appinstalled', () => { deferredPrompt = null; updInst(); });
+$('instbtn').onclick = openInst;
+$('instback').onclick = () => show('home');
+$('instgo').onclick = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  try{ await deferredPrompt.userChoice; }catch(e){}
+  deferredPrompt = null; openInst();
+};
+const okFetch = async (u, type) => { try{ const r = await fetch(u, {cache:'no-store'}); if (!r.ok) return false; if (type && !(r.headers.get('content-type')||'').includes(type)) return false; if (type === 'json') await r.json(); return true; }catch(e){ return false; } };
+async function swOK(){
+  if (!('serviceWorker' in navigator)) return false;
+  try{
+    let reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) reg = await navigator.serviceWorker.register('sw.js');
+    return await Promise.race([navigator.serviceWorker.ready.then(() => true), new Promise(r => setTimeout(() => r(false), 6000))]);
+  }catch(e){ return false; }
+}
+async function openInst(){
+  show('inst');
+  const done = isStandalone();
+  $('inst-done').hidden = !done;
+  $('inst-now').hidden = done || !deferredPrompt;
+  $('inst-ios').hidden = done || !isIOS;
+  $('inst-and').hidden = done || isIOS || !!deferredPrompt;
+  const man = document.querySelector('link[rel=manifest]').href;
+  const checks = [
+    ['Endereço seguro (https)', async () => location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1',
+      'Abra pelo endereço do GitHub Pages (https://SEU-USUARIO.github.io/NOME-DO-REPOSITÓRIO/), e não pela página do repositório nem por um arquivo baixado.'],
+    ['Navegador comum', async () => !inAppBrowser,
+      'Você abriu o link dentro de outro app (Instagram, Facebook…). Toque nos três pontinhos e escolha “Abrir no navegador”.'],
+    ['Arquivo do app (manifest)', () => okFetch(man, 'json'),
+      'O arquivo manifest.webmanifest não foi encontrado. Envie-o para a MESMA pasta do index.html.'],
+    ['Ícones', async () => (await okFetch('icon-192.png', 'image')) && (await okFetch('icon-512.png', 'image')),
+      'Os ícones icon-192.png e icon-512.png não foram encontrados. Envie-os para a MESMA pasta do index.html.'],
+    ['Modo offline (service worker)', swOK,
+      'O arquivo sw.js não foi encontrado ou não carregou. Envie-o para a MESMA pasta do index.html e recarregue a página.'],
+  ];
+  const ul = $('diag');
+  ul.innerHTML = checks.map(c => `<li class="wait"><i>…</i><span>${esc(c[0])}</span></li>`).join('');
+  const res = await Promise.all(checks.map(c => c[1]().catch(() => false)));
+  const tips = [];
+  ul.innerHTML = checks.map((c, k) => { if (!res[k]) tips.push(c[2]); return `<li class="${res[k] ? '' : 'no'}"><i>${res[k] ? '✓' : '✕'}</i><span>${esc(c[0])}${res[k] ? '' : `<small>${esc(c[2])}</small>`}</span></li>`; }).join('');
+  $('diagtip').textContent = tips.length ? 'Corrija os itens em vermelho e recarregue a página.'
+    : isIOS ? 'Está tudo certo. No iPhone, siga os passos acima pelo botão Compartilhar.'
+    : deferredPrompt ? '' : 'Está tudo certo. Se o botão não aparecer, use o menu ⋮ do Chrome. Se o app já foi instalado antes, ele pode estar na sua lista de apps.';
+}
+updInst();
+
 /* ---------------- início, offline e PWA ---------------- */
 const net = () => { $('offline').hidden = navigator.onLine; };
 addEventListener('online', net); addEventListener('offline', net); net();

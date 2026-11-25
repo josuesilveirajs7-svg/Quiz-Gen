@@ -187,3 +187,14 @@ form.search input::placeholder{color:var(--mute)}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:40}
 
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* instalação */
+.install{width:100%;display:flex;align-items:center;gap:14px;text-align:left;background:var(--card);border:1.5px solid var(--blue);border-radius:18px;padding:12px 14px;margin-bottom:22px;box-shadow:var(--shadow);min-height:64px}
+.install .ii img{width:42px;height:42px;border-radius:11px;display:block}
+.install b{display:block;font:700 16px Sora,sans-serif}.install small{color:var(--mute);font-size:14px}
+.install .go{margin-left:auto;color:var(--blue);font-size:22px}
+.diag{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.diag li{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:15px}
+.diag li i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:700 13px Inter,sans-serif;font-style:normal;color:#fff;background:var(--ok)}
+.diag li.no i{background:var(--bad)}.diag li.wait i{background:var(--mute)}
+.diag small{display:block;color:var(--mute);font-size:13px}

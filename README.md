@@ -12,18 +12,31 @@ monta 15 perguntas de múltipla escolha, em 3 níveis (Fácil, Médio e Difícil
 
 ## Publicar no GitHub Pages
 
-1. Crie um repositório novo no GitHub (ex.: `quizgen`).
-2. Envie todos os arquivos desta pasta para a raiz do repositório
-   (pelo site: **Add file → Upload files**, arraste tudo, inclusive a pasta `icons`
-   e o arquivo `.nojekyll`).
-3. Vá em **Settings → Pages**.
-4. Em **Source**, escolha **Deploy from a branch**, branch `main`, pasta `/ (root)` e salve.
-5. Em um ou dois minutos o app estará em `https://SEU-USUARIO.github.io/quizgen/`.
+> **Importante:** todos os arquivos ficam soltos na raiz do repositório, sem pastas.
+> O `index.html` precisa aparecer logo na primeira tela do repositório.
+
+1. Crie um repositório **público** no GitHub (ex.: `quizgen`).
+2. Toque em **Add file → Upload files** e envie os **10 arquivos** de uma vez:
+   `index.html`, `style.css`, `app.js`, `sw.js`, `manifest.webmanifest`,
+   `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `README.md`.
+   Depois toque em **Commit changes**.
+3. Vá em **Settings → Pages**. Em **Source**, escolha **Deploy from a branch**,
+   branch `main`, pasta `/ (root)`, e toque em **Save**.
+4. Espere 1 ou 2 minutos e abra `https://SEU-USUARIO.github.io/quizgen/`
+   (o endereço aparece no topo da página **Settings → Pages**).
 
 ## Instalar no celular
 
-- **Android (Chrome):** abra o endereço → menu ⋮ → **Instalar app** (ou “Adicionar à tela inicial”).
-- **iPhone (Safari):** abra o endereço → botão Compartilhar → **Adicionar à Tela de Início**.
+Abra o endereço do passo 4 e toque em **Instalar o QuizGen** na tela inicial do app.
+Essa tela mostra um **diagnóstico** com ✓ ou ✕ e diz exatamente o que corrigir se algo faltar.
+
+- **Android (Chrome):** botão **Instalar agora**, ou menu ⋮ → **Instalar app**.
+- **iPhone:** o aviso não aparece sozinho. Toque em **Compartilhar** → **Adicionar à Tela de Início**.
+
+Problemas comuns:
+- Abrir a página do repositório (`github.com/...`) em vez do site (`...github.io/...`).
+- Abrir o link dentro do Instagram/Facebook/WhatsApp: use “Abrir no navegador”.
+- Arquivos dentro de uma pasta: eles precisam estar na raiz, junto do `index.html`.
 
 ## Chave gratuita do Gemini
 
@@ -47,10 +60,10 @@ limite, espere alguns minutos. Se o Google mudar o nome do modelo, troque o camp
 | `app.js` | Pesquisa, geração das perguntas, quiz, resultado e histórico |
 | `manifest.webmanifest` | Nome, cores e ícones do app instalado |
 | `sw.js` | Service worker (abre offline e mais rápido) |
-| `icons/` | Ícones do app |
+| `` | Ícones do app |
 | `.nojekyll` | Faz o GitHub Pages servir os arquivos como estão |
 
 ## Atualizar o app
 
 Depois de mudar qualquer arquivo, abra `sw.js` e aumente a versão
-(`quizgen-v1` → `quizgen-v2`). Assim os celulares baixam a nova versão.
+(`quizgen-v3` → `quizgen-v4`). Assim os celulares baixam a nova versão.

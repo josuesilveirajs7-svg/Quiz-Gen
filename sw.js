@@ -1,11 +1,14 @@
 // Service worker do QuizGen: guarda o app para abrir rápido e funcionar offline.
 // Ao mudar qualquer arquivo, aumente a versão abaixo para os celulares baixarem a atualização.
-const VERSION = 'quizgen-v2';
+const VERSION = 'quizgen-v3';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
+  'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // Guarda arquivo por arquivo: se algum faltar no servidor, o app continua instalável.
+  e.waitUntil(caches.open(VERSION)
+    .then(c => Promise.allSettled(SHELL.map(f => c.add(f))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
